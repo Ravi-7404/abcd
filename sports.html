@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>6x6 Button Grid with Timer</title>
+    <title>6x6 Sports Button Grid with Timer</title>
     <style>
         body {
             display: flex;
@@ -135,7 +135,7 @@
     }
 
     function initializeGrid(difficulty) {
-        let emojis = ['🏸', '⚽', '🏓', '🏏', '🎾', '🏀', '🏉'];
+        let emojis = ['⚽', '🏀', '🎾', '🏈', '🏐', '🏓']; // Sports emojis
         let emojiCount = 6;
 
         if (difficulty === 'easy') {
@@ -143,7 +143,7 @@
             gridSize = 5;
             emojiCount = 5;
         } else if (difficulty === 'hard') {
-            emojis.push('🏸'); // Add a duplicate emoji for hard mode
+            emojis.push('🏏'); // Additional sports emoji for hard difficulty
             gridSize = 7;
             emojiCount = 7;
         } else {
@@ -241,19 +241,23 @@
         }
 
         alert(`Congratulations! You've completed the game in ${moveCount} moves!`);
+        resetGame();
+    }
+
+    function resetGame() {
+        grid.innerHTML = '';
+        moveCounterDisplay.textContent = 'Moves: 0';
+        proficiencyDisplay.textContent = 'Proficiency: 0%';
+        seconds = 0;
+        timerDisplay.textContent = '00:00:00';
         bgMusic.pause();
-        return true;
+        difficultyButtons.style.display = 'flex';
+        gsap.to(difficultyButtons, {
+            opacity: 1,
+            y: 0,
+            duration: 0.5
+        });
     }
-
-    function updateTimer() {
-        seconds++;
-        const hours = String(Math.floor(seconds / 3600)).padStart(2, '0');
-        const minutes = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
-        const secs = String(seconds % 60).padStart(2, '0');
-        timerDisplay.textContent = `${hours}:${minutes}:${secs}`;
-    }
-
-    setInterval(updateTimer, 1000);
 
     function shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
@@ -261,7 +265,14 @@
             [array[i], array[j]] = [array[j], array[i]];
         }
     }
-</script>
 
+    setInterval(() => {
+        seconds++;
+        const hours = String(Math.floor(seconds / 3600)).padStart(2, '0');
+        const minutes = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+        const secs = String(seconds % 60).padStart(2, '0');
+        timerDisplay.textContent = `${hours}:${minutes}:${secs}`;
+    }, 1000);
+</script>
 </body>
 </html>
