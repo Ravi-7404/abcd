@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>6x6 Button Grid with Timer</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        .timer {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .moves {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .grid {
+            display: grid;
+            gap: 5px;
+        }
+        button {
+            width: 60px;
+            height: 60px;
+            font-size: 20px;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+            background-color: #ffffff;
+            cursor: pointer;
+        }
+        button.selected {
+            border-color: #ff5722;
+        }
+        .difficulty-buttons {
+            margin-bottom: 20px;
+        }
+        .difficulty-buttons button {
+            width: 100px;
+            height: 50px;
+            font-size: 18px;
+            margin: 0 10px;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+        .difficulty-buttons button:hover {
+            background-color: #e7f0ff;
+        }
+        .proficiency {
+            font-size: 24px;
+            margin-top: 20px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" integrity="sha512-7eHRwcbYkK4d9g/6tD/mhkf++eoTHwpNM9woBxtPUBWm67zeAfFC+HrdoE2GanKeocly/VxeLvIqwvCdk7qScg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+
+<div class="difficulty-buttons" id="difficultyButtons">
+    <button onclick="startGame('easy')">Easy</button>
+    <button onclick="startGame('medium')">Medium</button>
+    <button onclick="startGame('hard')">Hard</button>
+</div>
+<div class="moves" id="moveCounter">Moves: 0</div>
+<div class="timer" id="timer">00:00:00</div>
+<div class="grid" id="buttonGrid"></div>
+<div class="proficiency" id="proficiencyDisplay">Proficiency: 0%</div>
+<audio id="swapSound" src="swap.mp3" preload="auto"></audio>
+<audio id="bgMusic" src="bg.mp3" loop preload="auto"></audio>
+
+<script>
+    const grid = document.getElementById('buttonGrid');
+    const timerDisplay = document.getElementById('timer');
+    const moveCounterDisplay = document.getElementById('moveCounter');
+    const proficiencyDisplay = document.getElementById('proficiencyDisplay');
+    const swapSound = document.getElementById('swapSound');
+    const bgMusic = document.getElementById('bgMusic');
+    const difficultyButtons = document.getElementById('difficultyButtons');
+    let selectedButton = null;
+    let seconds = 0;
+    let gridSize;
+    let moveCount = 0;
+
+    function minSwapsToEqual(elements) {
+        const freq = {};
+        let maxFreq = 0;
+
+        for (const el of elements) {
+            freq[el] = (freq[el] || 0) + 1;
+            maxFreq = Math.max(maxFreq, freq[el]);
+        }
+
+        return elements.length - maxFreq;
+    }
+
+    function calculateMinimumSwaps() {
+        const buttons = Array.from(grid.children);
+        let totalRowSwaps = 0;
+        let totalColSwaps = 0;
+
+        for (let row = 0; row < gridSize; row++) {
+            const rowContent = buttons.slice(row * gridSize, (row + 1) * gridSize).map(button => button.textContent);
+            totalRowSwaps += minSwapsToEqual(rowContent);
+        }
+
+        for (let col = 0; col < gridSize; col++) {
+            const colContent = buttons.filter((_, index) => index % gridSize === col).map(button => button.textContent);
+            totalColSwaps += minSwapsToEqual(colContent);
+        }
+
+        return Math.min(totalRowSwaps, totalColSwaps);
+    }
+
+    function startGame(difficulty) {
+        seconds = 0;
+        timerDisplay.textContent = '00:00:00';
+        moveCount = 0;
+        moveCounterDisplay.textContent = 'Moves: 0';
+        proficiencyDisplay.textContent = 'Proficiency: 0%';
+        grid.innerHTML = '';
+
+        gsap.to(difficultyButtons, {
+            opacity: 0,
+            y: -50,
+            duration: 0.5,
+            onComplete: () => {
+                difficultyButtons.style.display = 'none';
+                initializeGrid(difficulty);
+            }
+        });
+    }
+
+    function initializeGrid(difficulty) {
+        let emojis = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
+        let emojiCount = 6;
+
+        if (difficulty === 'easy') {
+            emojis.splice(0, 1);
+            gridSize = 5;
+            emojiCount = 5;
+        } else if (difficulty === 'hard') {
+            emojis.push('0️⃣'); // Add a duplicate emoji for hard mode
+            gridSize = 7;
+            emojiCount = 7;
+        } else {
+            gridSize = 6;
+        }
+
+        const allEmojis = emojis.flatMap(emoji => Array(emojiCount).fill(emoji));
+        shuffleArray(allEmojis);
+
+        grid.style.gridTemplateColumns = `repeat(${gridSize}, 60px)`;
+        grid.style.gridTemplateRows = `repeat(${gridSize}, 60px)`;
+
+        allEmojis.forEach((emoji, index) => {
+            const button = document.createElement('button');
+            button.textContent = emoji;
+            button.dataset.index = index;
+            button.addEventListener('click', handleButtonClick);
+            grid.appendChild(button);
+        });
+
+        bgMusic.currentTime = 0;
+        bgMusic.play();
+    }
+
+    function handleButtonClick(event) {
+        const clickedButton = event.target;
+
+        if (selectedButton) {
+            swapEmojis(selectedButton, clickedButton);
+            selectedButton.classList.remove('selected');
+            selectedButton = null;
+        } else {
+            selectedButton = clickedButton;
+            selectedButton.classList.add('selected');
+        }
+    }
+
+    function swapEmojis(button1, button2) {
+        const index1 = parseInt(button1.dataset.index);
+        const index2 = parseInt(button2.dataset.index);
+        const row1 = Math.floor(index1 / gridSize);
+        const col1 = index1 % gridSize;
+        const row2 = Math.floor(index2 / gridSize);
+        const col2 = index2 % gridSize;
+
+        const isAdjacent = Math.abs(index1 - index2) === 1 || 
+                           (Math.abs(row1 - row2) === 1 && col1 === col2);
+
+        if (isAdjacent) {
+            gsap.to(button1, {
+                x: button2.offsetLeft - button1.offsetLeft,
+                y: button2.offsetTop - button1.offsetTop,
+                duration: 0.5,
+                onComplete: () => {
+                    const tempText = button1.textContent;
+                    button1.textContent = button2.textContent;
+                    button2.textContent = tempText;
+
+                    swapSound.currentTime = 0;
+                    swapSound.play();
+
+                    button1.style.transform = 'translate(0, 0)';
+                    button2.style.transform = 'translate(0, 0)';
+
+                    moveCount++;
+                    moveCounterDisplay.textContent = `Moves: ${moveCount}`;
+                    checkWinCondition();
+                }
+            });
+
+            gsap.to(button2, {
+                x: button1.offsetLeft - button2.offsetLeft,
+                y: button1.offsetTop - button2.offsetTop,
+                duration: 0.5,
+                clearProps: "all"
+            });
+        }
+    }
+
+    function checkWinCondition() {
+        const buttons = Array.from(grid.children);
+        
+        for (let row = 0; row < gridSize; row++) {
+            const rowContent = buttons.slice(row * gridSize, (row + 1) * gridSize).map(button => button.textContent);
+            if (new Set(rowContent).size !== rowContent.length) {
+                return false;
+            }
+        }
+
+        for (let col = 0; col < gridSize; col++) {
+            const colContent = buttons.filter((_, index) => index % gridSize === col).map(button => button.textContent);
+            if (new Set(colContent).size !== colContent.length) {
+                return false;
+            }
+        }
+
+        alert(`Congratulations! You've completed the game in ${moveCount} moves!`);
+        bgMusic.pause();
+        return true;
+    }
+
+    function updateTimer() {
+        seconds++;
+        const hours = String(Math.floor(seconds / 3600)).padStart(2, '0');
+        const minutes = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+        const secs = String(seconds % 60).padStart(2, '0');
+        timerDisplay.textContent = `${hours}:${minutes}:${secs}`;
+    }
+
+    setInterval(updateTimer, 1000);
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+</script>
+
+</body>
+</html>

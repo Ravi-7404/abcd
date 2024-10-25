@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme and Level Selector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" integrity="sha512-7eHRwcbYkK4d9g/6tD/mhkf++eoTHwpNM9woBxtPUBWm67zeAfFC+HrdoE2GanKeocly/VxeLvIqwvCdk7qScg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeButtons = document.getElementById('themebuttons');
+            const levelSelection = document.getElementById('levelSelection');
+            const themes = ['sports', 'fruits', 'animals', 'vehicles', 'numbers', 'food'];
+            let selectedTheme = '';
+
+            themes.forEach(theme => {
+                document.getElementById('theme' + theme).addEventListener('click', function() {
+                    selectedTheme = theme;
+                    localStorage.setItem('selectedTheme', theme);
+                    const filename = `${theme}.html`; // Create filename based on selected theme
+                    window.location.href = filename; // Navigate to the file
+                });
+            });
+        });
+    </script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100 flex-col">
+
+    <div id="themebuttons" class="bg-white p-6 rounded shadow-md">
+        <h2 class="mb-4 text-lg font-semibold">Select preferred theme</h2>
+        <button id="themesports" class="w-full mb-2 p-2 bg-blue-500 text-white rounded hover:bg-blue-600">Sports</button>
+        <button id="themefruits" class="w-full mb-2 p-2 bg-green-500 text-white rounded hover:bg-green-600">Fruits</button>
+        <button id="themeanimals" class="w-full mb-2 p-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">Animals</button>
+        <button id="themevehicles" class="w-full mb-2 p-2 bg-red-500 text-white rounded hover:bg-red-600">Vehicles</button>
+        <button id="themenumbers" class="w-full mb-2 p-2 bg-purple-500 text-white rounded hover:bg-purple-600">Numbers</button>
+        <button id="themefood" class="w-full p-2 bg-red-600 text-white rounded hover:bg-orange-600">Food</button>
+    </div>
+
+</body>
+</html>
